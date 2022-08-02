@@ -1,6 +1,5 @@
 const vscode = require('vscode');
 const { exec } = require('child_process');
-const { platform } = require('os');
 const output = vscode.window.createOutputChannel('C/C++ compiler');
 const DEBUG = 0, RELEASE = 1;
 
@@ -40,12 +39,7 @@ const code = {
 
         
     run: function (paths, clear){
-        let runTask = "";
-
-        if(platform() == 'win32')
-            runTask = `start /wait cmd /c \"\"${paths.dir}\\${paths.name}.exe\" && pause\"`;
-        else if(platform() == 'linux')
-            runTask = `gnome-terminal -- bash -c \" '${paths.dir}/${paths.name}'; read -p 'Press any key to continue.'\"`;
+        let runTask = `start /wait cmd /c \"\"${paths.dir}\\${paths.name}.exe\" && pause\"`;
 
         if(clear == true) output.clear();
 
