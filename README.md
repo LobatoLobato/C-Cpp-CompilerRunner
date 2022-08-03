@@ -1,5 +1,7 @@
 # C/C++ Compiler/Runner README
 
+This is a simple quality of life extension for C/C++ programming in VSCODE
+
 ## Features
 
 This extension adds the capability to compile .c and .cpp files, and to run the compiled file in an external terminal.
