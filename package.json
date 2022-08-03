@@ -54,9 +54,9 @@
 		],
 		"configuration": {
 			"type": "object",
-			"title": "C/C++ Compiler",
+			"title": "C/C++ Compiler/Runner",
 			"properties": {
-				"C/C++ Compiler": {
+				"C/C++ Compiler/Runner": {
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
@@ -64,11 +64,6 @@
 							"type": "string",
 							"default": "#ff4982",
 							"markdownDescription": "Color of the buttons (HEX)"
-						},
-						"LinuxTerminal": {
-							"type": "string",
-							"default": "GNOME",
-							"description": "Name of the terminal. Ex: GNOME"
 						}
 					}
 				}
