@@ -48,8 +48,8 @@
             "title": "CompileRun"
 		},
 		{
-			"command": "comp.reloadBT",
-			"title": "Reload Buttons"
+			"command": "comp.changeMode",
+			"title": "ModeChange"
 		}
 		],
 		"configuration": {

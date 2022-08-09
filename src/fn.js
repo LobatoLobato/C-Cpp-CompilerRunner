@@ -1,10 +1,13 @@
 const vscode = require('vscode');
 const { exec } = require('child_process');
-const output = vscode.window.createOutputChannel('C/C++ compiler');
+const path = require('path');
 const DEBUG = 0, RELEASE = 1;
+const output = vscode.window.createOutputChannel('C/C++ compiler');
 
 const code = {
-    compile: function(paths, gnuPath, rodar, flags) {
+    compile: function(gnuPath, flags, run = false) {
+        let paths = path.parse(vscode.window.activeTextEditor.document.fileName);//Finds the active text editor's path
+
         let sufix = `\"${paths.dir}\\${paths.base}\" -o \"${paths.dir}\\${paths.name}\"`,
             prefix,
             compileTask;
@@ -19,29 +22,21 @@ const code = {
         }
         compileTask = `${prefix} ${flags} ${sufix}`;
         
-        output.clear();
         output.appendLine(`Compiling ${paths.base}...`);
         exec(compileTask, (error, stdout, stderr) => {
             if(stderr){
-                const auxArray = stderr.split(`${paths.dir}\\${paths.base}:`);
-                let stderrMessage = "";
-                for(let i=1;i<auxArray.length;i++)
-                    stderrMessage +=  auxArray[i];	
-                output.appendLine(stderrMessage);
+                for (let line of stderr.split("\n"))
+                    output.appendLine(line.substring(line.indexOf(paths.base)));
             }
-            if(!error){
-                output.appendLine('Succesfully compiled file');
-                if(rodar) this.run(paths, false);
-            }else if(error)
-                output.appendLine('Error ¬¬');
+            output.appendLine((error) ? 'Error' : 'Succesfully compiled file');
+            if(run && !error) this.run();
         });
     },
 
         
-    run: function (paths, clear){
+    run: function (){
+        let paths = path.parse(vscode.window.activeTextEditor.document.fileName);//Finds the active text editor's path
         let runTask = `start /wait cmd /c \"\"${paths.dir}\\${paths.name}.exe\" && pause\"`;
-
-        if(clear == true) output.clear();
 
         output.appendLine('[Running...]');
 
@@ -51,8 +46,8 @@ const code = {
         
     },
 
-    compileAndRun: function (paths, gnuPath, flags){
-        this.compile(paths, gnuPath, true, flags)
+    compileAndRun: function (gnuPath, flags){
+        this.compile(gnuPath, flags, true);
     },
 
     sla: function (bt, txt, clr, cmd){
@@ -67,7 +62,6 @@ const code = {
 
         if(mode == DEBUG) this.sla(BT.mode, 'Debug', color, 'comp.changeMode');
         else if(mode == RELEASE) this.sla(BT.mode, 'Release', color, 'comp.changeMode');
-        this.sla(BT.reload, '↻', color, 'comp.reloadBT');
         this.sla(BT.compile, '⛭ Compile', color, 'comp.compile');
         this.sla(BT.run, '▶ Run', color, 'comp.run');
         this.sla(BT.compileRun, '⛭▶ Compile/Run', color, 'comp.compileRun');
