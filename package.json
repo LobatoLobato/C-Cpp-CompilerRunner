@@ -1,12 +1,13 @@
 {
   "name": "comp",
-	"displayName": "C/C++ CompilerRunner",
+	"displayName": "C/C++ Compiler Runner",
 	"publisher": "FelipeLobato",
 	"description": "Te amo",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"engines": {
 		"vscode": "^1.66.0"
 	},
+	"icon": "",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/LobatoLobato/C-Cpp-CompilerRunner"
