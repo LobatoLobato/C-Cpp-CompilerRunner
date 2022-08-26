@@ -51,6 +51,11 @@
 		{
 			"command": "comp.changeMode",
 			"title": "ModeChange"
+		},
+		{
+			"command": "comp.updateColor",
+			"title": "Button color change",
+			"category": "C/C++ Compiler"
 		}
 		],
 		"configuration": {
@@ -60,11 +65,10 @@
 				"C/C++ Compiler/Runner": {
 					"type": "object",
 					"additionalProperties": false,
+					"scope": "resource",
 					"properties": {
 						"BTColor": {
-							"type": "string",
-							"default": "#ff4982",
-							"markdownDescription": "Color of the buttons (HEX)"
+							"type": "string"
 						}
 					}
 				}
