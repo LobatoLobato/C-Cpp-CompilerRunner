@@ -68,7 +68,8 @@
 					"scope": "resource",
 					"properties": {
 						"BTColor": {
-							"type": "string"
+							"type": "string",
+							"default": "#FFFFFF"
 						}
 					}
 				}

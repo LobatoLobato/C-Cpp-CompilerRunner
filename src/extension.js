@@ -1,5 +1,5 @@
 const vscode = require('vscode');
-const { exec, spawnSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const path = require('path');
 const { StatusBarItemHelper } = require('./StatusBarItemHelper');
 const config = vscode.workspace.getConfiguration('C/C++ Compiler/Runner');
@@ -25,7 +25,6 @@ const statusBarItems = {
 
 StatusBarItemHelper.setColor(statusBarColor());
 
-//Output Terminal
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -57,21 +56,29 @@ function activate(context) {
 	//Runs the compiled file
 	registerCommand(context, 'comp.run', () => {
 		terminal.clear();
-		
+
 		run(activeFilePaths);
 	});
 
 	//Compiles and runs the compiled file
 	registerCommand(context, 'comp.compileRun', () => {
 		terminal.clear();
-		
+
 		if (compile(compilerPath, compilerFlags[compilerMode], activeFilePaths)) {
 			run(activeFilePaths);
 		}
 	});
 
 	vscode.window.onDidChangeActiveTextEditor(() => {
+		let validExt = RegExp(/^[.](c|cpp|json)$/gim);
+
 		activeFilePaths = getTextEditorPath();
+
+		if (validExt.test(activeFilePaths.ext)) {
+			StatusBarItemHelper.showAll();
+		} else {
+			StatusBarItemHelper.hideAll();
+		}
 	});
 
 	vscode.workspace.onDidChangeConfiguration(() => {
@@ -79,64 +86,102 @@ function activate(context) {
 	});
 }
 
+/**
+ * @param {string} compilerPath The whole path to the compiler
+ * @param {string} flags The compilation flags
+ * @param {path.ParsedPath} paths The parsed text editor paths
+ * @returns {boolean} The compilation status
+ */
+
 function compile(compilerPath, flags, paths) {
-	let sufix = `\"${paths.dir}\\${paths.base}\" -o \"${paths.dir}\\${paths.name}\"`,
-		compiler = (paths.ext === ".c") ? 'gcc' : 'g++',
-		prefix = `"${compilerPath}${compiler}"`;
+	let compiler = (paths.ext === '.c') ? 'gcc' : 'g++',
+		prefix = (compilerPath) ?
+			`"${compilerPath}\\${compiler}"` : `${compiler}`;
+	
+	let inputFile = `"${paths.dir}\\${paths.base}"`,
+		outputFile = `"${paths.dir}\\${paths.name}"`,
+		sufix = `${inputFile} -o ${outputFile}`;
+
 	let compileTask = `${prefix} ${flags} ${sufix}`;
 
 	terminal.appendLine(`Compiling ${paths.base}...`);
 
-	let compilation = spawnSyncHandler(compileTask, (stdout, stderr) => {
-		let message = stderr.replace(/(C:[^:]+(:\s)+)/gi, ''),
-			status = !message.includes('error');
+	let compilationStatus = spawnSyncHandler(compileTask,
+		(...stdio) => {
+			let message = stdio[1].replace(/(C:[^:]+(:\s)+)/gi, ''),
+				status = !message.includes('error');
 
-		return { message, status };
-	});
+			terminal.appendLine(message);
 
-	terminal.appendLine(compilation.message);
+			if (status) {
+				terminal.appendLine('Successfully compiled file!');
+			}
 
-	if (compilation.status == true)
-		terminal.appendLine('Succesfully compiled file!');
+			return status;
+		}
+	);
 
-	return compilation.status;
+	return compilationStatus;
 }
 
-
+/**
+ * @param {path.ParsedPath} paths 
+ */
 function run(paths) {
 	let prefix = 'start /wait cmd /c',
-		execPath = `${paths.dir}\\${paths.name}.exe`,
+		execPath = `"${paths.dir}\\${paths.name}.exe"`,
 		sufix = '&& pause';
-	let runTask = `${prefix} ""${execPath}" ${sufix}"`;
+
+	let runTask = `${prefix} "${execPath} ${sufix}"`;
 
 	terminal.appendLine('[Running...]');
 
-	exec(runTask, () => terminal.appendLine('[Done.]'));
+	spawnSyncHandler(runTask, () => terminal.appendLine('[Done.]'));
 }
 
+/**
+ * @param {vscode.ExtensionContext} context
+ * @param {string} command
+ * @param {{(...args: any[]): any; }} callback
+ */
 function registerCommand(context, command, callback) {
-	context.subscriptions.push(vscode.commands.registerCommand(command, callback));
+	context.subscriptions.push(
+		vscode.commands.registerCommand(command, callback)
+	);
 }
-
+/**
+ * @return {string} String containing the compiler path.
+ */
 function getCompilerPath() {
-	let compilerPath = spawnSyncHandler('set', stdout => {
-		let path = stdout.match(/[^;]+mingw[^;]+/gi);
+	let compilerPath = spawnSyncHandler('set', stdout =>
+		"stdoutaaaaa".match(/[^;]+mingw[^;]+/gi)
+	);
 
-		if (path == null) {
-			return '';
-		}
-
-		return path + '\\';
-	});
 	return compilerPath;
 }
-
+/**
+ * @return {path.ParsedPath} 
+ */
 function getTextEditorPath() {
-	return path.parse(vscode.window.activeTextEditor.document.fileName);
+	let validFiles = new RegExp(/\.(cpp|c|json)$/gim);
+
+	let txtEditorPath = vscode.window.visibleTextEditors.find((editor) =>
+		validFiles.test(editor.document.fileName)
+	).document.fileName;
+
+	return path.parse(txtEditorPath);
 }
 
+/**
+ * @param {string} command
+ * @param {{(stdout: string, stderr: string, error: Error): any; }} callback
+ */
 function spawnSyncHandler(command, callback) {
-	let process = spawnSync(command, { encoding: 'utf-8', shell: true });
+	let process = spawnSync(command, {
+		encoding: 'utf-8',
+		shell: true
+	});
+
 	return callback(process.stdout, process.stderr, process.error);
 }
 
